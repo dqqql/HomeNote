@@ -34,10 +34,15 @@ body {
 }
 
 .role-buttons {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 20px;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+#settings-modal .role-buttons {
+  max-width: 100%;
 }
 
 .role-btn {
@@ -71,9 +76,9 @@ body {
 .role-btn.mother .color-indicator { background-color: #e91e63; }
 .role-btn.mother:hover { background-color: #e91e63; color: white; }
 
-.role-btn.son { border-color: #2196f3; color: #2196f3; }
-.role-btn.son .color-indicator { background-color: #2196f3; }
-.role-btn.son:hover { background-color: #2196f3; color: white; }
+.role-btn.son { border-color: #27ae60; color: #27ae60; }
+.role-btn.son .color-indicator { background-color: #27ae60; }
+.role-btn.son:hover { background-color: #27ae60; color: white; }
 
 .role-btn.daughter { border-color: #ff9800; color: #ff9800; }
 .role-btn.daughter .color-indicator { background-color: #ff9800; }
@@ -191,7 +196,8 @@ body {
   background-color: #3498db;
   color: white;
   cursor: pointer;
-  margin-bottom: 20px;
+  flex: 0 0 auto;
+  min-width: 120px;
 }
 
 .btn-primary:hover {
@@ -217,6 +223,8 @@ body {
   color: #7f8c8d;
   cursor: pointer;
   transition: all 0.2s ease;
+  flex: 0 0 auto;
+  min-width: 120px;
 }
 
 .btn-cancel:hover {
@@ -318,7 +326,7 @@ body {
 }
 
 .note-role.son {
-  background-color: #2196f3;
+  background-color: #27ae60;
 }
 
 .note-role.daughter {
@@ -558,6 +566,7 @@ body {
   cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
+  background-color: white;
 }
 
 .color-option:hover {
