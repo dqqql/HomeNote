@@ -26,6 +26,7 @@ db.serialize(() => {
     title TEXT,
     content TEXT,
     role TEXT,
+    color TEXT DEFAULT '',
     is_private INTEGER DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -89,8 +90,8 @@ app.get('/api/notes/:id/images', (req, res) => {
 });
 
 app.post('/api/notes', (req, res) => {
-  const { title, content, role, is_private } = req.body;
-  db.run('INSERT INTO notes (title, content, role, is_private) VALUES (?, ?, ?, ?)', [title, content, role, is_private ? 1 : 0], function(err) {
+  const { title, content, role, color, is_private } = req.body;
+  db.run('INSERT INTO notes (title, content, role, color, is_private) VALUES (?, ?, ?, ?, ?)', [title, content, role, color || '', is_private ? 1 : 0], function(err) {
     if (err) res.status(500).json({ error: err.message });
     else res.json({ id: this.lastID });
   });
@@ -105,8 +106,8 @@ app.post('/api/notes/:id/images', upload.single('image'), (req, res) => {
 });
 
 app.put('/api/notes/:id', (req, res) => {
-  const { title, content, is_private } = req.body;
-  db.run('UPDATE notes SET title = ?, content = ?, is_private = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [title, content, is_private ? 1 : 0, req.params.id], function(err) {
+  const { title, content, color, is_private } = req.body;
+  db.run('UPDATE notes SET title = ?, content = ?, color = ?, is_private = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [title, content, color || '', is_private ? 1 : 0, req.params.id], function(err) {
     if (err) res.status(500).json({ error: err.message });
     else res.json({ success: true });
   });

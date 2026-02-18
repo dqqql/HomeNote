@@ -36,23 +36,50 @@ body {
 .role-buttons {
   display: flex;
   justify-content: center;
-  gap: 30px;
+  flex-wrap: wrap;
+  gap: 20px;
 }
 
 .role-btn {
-  padding: 30px 50px;
-  font-size: 24px;
-  border: 3px solid #3498db;
+  padding: 25px 40px;
+  font-size: 22px;
+  border: 3px solid transparent;
   border-radius: 15px;
   background-color: white;
-  color: #3498db;
   cursor: pointer;
   transition: all 0.3s;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 140px;
 }
 
+.role-btn .color-indicator {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  margin-top: 5px;
+}
+
+.role-btn.father { border-color: #3498db; color: #3498db; }
+.role-btn.father .color-indicator { background-color: #3498db; }
+.role-btn.father:hover { background-color: #3498db; color: white; }
+
+.role-btn.mother { border-color: #e91e63; color: #e91e63; }
+.role-btn.mother .color-indicator { background-color: #e91e63; }
+.role-btn.mother:hover { background-color: #e91e63; color: white; }
+
+.role-btn.son { border-color: #2196f3; color: #2196f3; }
+.role-btn.son .color-indicator { background-color: #2196f3; }
+.role-btn.son:hover { background-color: #2196f3; color: white; }
+
+.role-btn.daughter { border-color: #ff9800; color: #ff9800; }
+.role-btn.daughter .color-indicator { background-color: #ff9800; }
+.role-btn.daughter:hover { background-color: #ff9800; color: white; }
+
 .role-btn:hover {
-  background-color: #3498db;
-  color: white;
   transform: scale(1.05);
 }
 
@@ -199,7 +226,14 @@ body {
 
 .notes-list {
   display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 20px;
+}
+
+@media (max-width: 768px) {
+  .notes-list {
+    grid-template-columns: 1fr;
+  }
 }
 
 .note-card {
@@ -207,8 +241,41 @@ body {
   border: 2px solid #ecf0f1;
   border-radius: 12px;
   padding: 25px;
-  transition: box-shadow 0.3s;
+  transition: box-shadow 0.3s, transform 0.2s;
+  position: relative;
+  overflow: hidden;
 }
+
+.note-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+}
+
+.note-card.color-red::before { background-color: #e74c3c; }
+.note-card.color-green::before { background-color: #27ae60; }
+.note-card.color-blue::before { background-color: #3498db; }
+.note-card.color-yellow::before { background-color: #f1c40f; }
+.note-card.color-purple::before { background-color: #9b59b6; }
+.note-card.color-orange::before { background-color: #e67e22; }
+.note-card.color-pink::before { background-color: #e91e63; }
+.note-card.color-teal::before { background-color: #1abc9c; }
+.note-card.color-indigo::before { background-color: #3f51b5; }
+.note-card.color-brown::before { background-color: #795548; }
+
+.note-card.color-red { background-color: #fef5f5; border-color: #fadbd8; }
+.note-card.color-green { background-color: #f0fdf4; border-color: #bbf7d0; }
+.note-card.color-blue { background-color: #eff6ff; border-color: #bfdbfe; }
+.note-card.color-yellow { background-color: #fefce8; border-color: #fef08a; }
+.note-card.color-purple { background-color: #faf5ff; border-color: #e9d5ff; }
+.note-card.color-orange { background-color: #fff7ed; border-color: #fed7aa; }
+.note-card.color-pink { background-color: #fdf2f8; border-color: #fbcfe8; }
+.note-card.color-teal { background-color: #f0fdfa; border-color: #99f6e4; }
+.note-card.color-indigo { background-color: #eef2ff; border-color: #c7d2fe; }
+.note-card.color-brown { background-color: #fdf8f6; border-color: #d6ccc2; }
 
 .note-card:hover {
   box-shadow: 0 4px 15px rgba(0,0,0,0.1);
@@ -475,3 +542,57 @@ body {
   color: #999;
   font-size: 20px;
 }
+
+.color-picker-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.color-option {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.color-option:hover {
+  transform: scale(1.15);
+}
+
+.color-option.selected {
+  border-color: #333;
+  box-shadow: 0 0 0 2px white, 0 0 0 4px #333;
+}
+
+.color-option::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.color-option.selected::after {
+  opacity: 1;
+}
+
+.color-option.red { background-color: #e74c3c; }
+.color-option.green { background-color: #27ae60; }
+.color-option.blue { background-color: #3498db; }
+.color-option.yellow { background-color: #f1c40f; }
+.color-option.purple { background-color: #9b59b6; }
+.color-option.orange { background-color: #e67e22; }
+.color-option.pink { background-color: #e91e63; }
+.color-option.teal { background-color: #1abc9c; }
+.color-option.indigo { background-color: #3f51b5; }
+.color-option.brown { background-color: #795548; }

@@ -2,6 +2,7 @@ let currentRole = localStorage.getItem('homenote_role');
 let currentTab = 'notes';
 let pendingImage = null;
 let currentIsPrivate = false;
+let selectedColor = '';
 
 const roleNames = {
   father: '👨 爸爸',
@@ -14,7 +15,22 @@ document.addEventListener('DOMContentLoaded', () => {
   if (currentRole) {
     showMainApp();
   }
+  initColorPicker();
 });
+
+function initColorPicker() {
+  const colorPicker = document.getElementById('note-color-picker');
+  if (colorPicker) {
+    colorPicker.addEventListener('click', (e) => {
+      const option = e.target.closest('.color-option');
+      if (option) {
+        document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
+        option.classList.add('selected');
+        selectedColor = option.dataset.color;
+      }
+    });
+  }
+}
 
 function selectRole(role) {
   currentRole = role;
@@ -87,7 +103,7 @@ function renderNotes(notes, containerId) {
   }
   
   container.innerHTML = notes.map(note => `
-    <div class="note-card">
+    <div class="note-card ${note.color ? 'color-' + note.color : ''}">
       <div class="note-header">
         <h3 class="note-title">${escapeHtml(note.title)}</h3>
         <div class="note-meta">
@@ -123,6 +139,7 @@ async function loadNoteImages(noteId) {
 
 function showNoteModal(isPrivate = false) {
   currentIsPrivate = isPrivate;
+  selectedColor = '';
   document.getElementById('note-modal').style.display = 'flex';
   document.getElementById('modal-title').textContent = isPrivate ? '新建日记' : '新建便签';
   document.getElementById('note-form').reset();
@@ -130,6 +147,9 @@ function showNoteModal(isPrivate = false) {
   document.getElementById('note-content').innerHTML = '';
   document.getElementById('image-preview').innerHTML = '';
   pendingImage = null;
+  
+  document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
+  document.querySelector('.color-option[data-color=""]').classList.add('selected');
 }
 
 async function editNote(noteId) {
@@ -138,6 +158,7 @@ async function editNote(noteId) {
     const note = await response.json();
     
     currentIsPrivate = note.is_private === 1;
+    selectedColor = note.color || '';
     document.getElementById('note-modal').style.display = 'flex';
     document.getElementById('modal-title').textContent = '编辑便签';
     document.getElementById('note-id').value = note.id;
@@ -145,6 +166,13 @@ async function editNote(noteId) {
     document.getElementById('note-content').innerHTML = note.content;
     document.getElementById('image-preview').innerHTML = '';
     pendingImage = null;
+    
+    document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
+    const colorOption = document.querySelector(`.color-option[data-color="${selectedColor}"]`);
+    if (colorOption) {
+      colorOption.classList.add('selected');
+    }
+    
     loadNoteImages(noteId);
   } catch (error) {
     console.error('Error loading note:', error);
@@ -202,14 +230,14 @@ async function saveNote(e) {
       await fetch(`/api/notes/${noteId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, content, is_private: currentIsPrivate })
+        body: JSON.stringify({ title, content, color: selectedColor, is_private: currentIsPrivate })
       });
       savedNoteId = noteId;
     } else {
       const response = await fetch('/api/notes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, content, role: currentRole, is_private: currentIsPrivate })
+        body: JSON.stringify({ title, content, role: currentRole, color: selectedColor, is_private: currentIsPrivate })
       });
       const data = await response.json();
       savedNoteId = data.id;

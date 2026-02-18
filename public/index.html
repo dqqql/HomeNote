@@ -12,10 +12,22 @@
       <h1>欢迎来到家庭便签</h1>
       <p>请选择您的角色</p>
       <div class="role-buttons">
-        <button class="role-btn" onclick="selectRole('father')">👨 爸爸</button>
-        <button class="role-btn" onclick="selectRole('mother')">👩 妈妈</button>
-        <button class="role-btn" onclick="selectRole('son')">👦 儿子</button>
-        <button class="role-btn" onclick="selectRole('daughter')">👧 女儿</button>
+        <button class="role-btn father" onclick="selectRole('father')">
+          👨 爸爸
+          <span class="color-indicator"></span>
+        </button>
+        <button class="role-btn mother" onclick="selectRole('mother')">
+          👩 妈妈
+          <span class="color-indicator"></span>
+        </button>
+        <button class="role-btn son" onclick="selectRole('son')">
+          👦 儿子
+          <span class="color-indicator"></span>
+        </button>
+        <button class="role-btn daughter" onclick="selectRole('daughter')">
+          👧 女儿
+          <span class="color-indicator"></span>
+        </button>
       </div>
     </div>
 
@@ -82,6 +94,22 @@
               <div id="note-content" contenteditable="true" class="editor"></div>
               <div id="image-preview"></div>
             </div>
+            <div class="form-group">
+              <label>便签颜色</label>
+              <div class="color-picker-group" id="note-color-picker">
+                <div class="color-option" data-color="" title="默认"></div>
+                <div class="color-option red" data-color="red" title="红色"></div>
+                <div class="color-option green" data-color="green" title="绿色"></div>
+                <div class="color-option blue" data-color="blue" title="蓝色"></div>
+                <div class="color-option yellow" data-color="yellow" title="黄色"></div>
+                <div class="color-option purple" data-color="purple" title="紫色"></div>
+                <div class="color-option orange" data-color="orange" title="橙色"></div>
+                <div class="color-option pink" data-color="pink" title="粉色"></div>
+                <div class="color-option teal" data-color="teal" title="青色"></div>
+                <div class="color-option indigo" data-color="indigo" title="靛蓝"></div>
+                <div class="color-option brown" data-color="brown" title="棕色"></div>
+              </div>
+            </div>
             <div class="form-actions">
               <button type="button" class="btn-cancel" onclick="closeNoteModal()">取消</button>
               <button type="submit" class="btn-primary">保存</button>
@@ -97,10 +125,22 @@
           <div class="form-group">
             <label>切换角色</label>
             <div class="role-buttons">
-              <button class="role-btn" onclick="switchRole('father')">👨 爸爸</button>
-              <button class="role-btn" onclick="switchRole('mother')">👩 妈妈</button>
-              <button class="role-btn" onclick="switchRole('son')">👦 儿子</button>
-              <button class="role-btn" onclick="switchRole('daughter')">👧 女儿</button>
+              <button class="role-btn father" onclick="switchRole('father')">
+                👨 爸爸
+                <span class="color-indicator"></span>
+              </button>
+              <button class="role-btn mother" onclick="switchRole('mother')">
+                👩 妈妈
+                <span class="color-indicator"></span>
+              </button>
+              <button class="role-btn son" onclick="switchRole('son')">
+                👦 儿子
+                <span class="color-indicator"></span>
+              </button>
+              <button class="role-btn daughter" onclick="switchRole('daughter')">
+                👧 女儿
+                <span class="color-indicator"></span>
+              </button>
             </div>
           </div>
         </div>
