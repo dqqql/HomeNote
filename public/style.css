@@ -182,13 +182,19 @@ body {
 }
 
 .btn-cancel {
-  padding: 12px 24px;
-  font-size: 18px;
+  padding: 15px 30px;
+  font-size: 20px;
   border: 2px solid #95a5a6;
   border-radius: 10px;
   background-color: white;
   color: #7f8c8d;
   cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-cancel:hover {
+  background-color: #95a5a6;
+  color: white;
 }
 
 .notes-list {
@@ -362,21 +368,75 @@ body {
 
 .editor-toolbar {
   display: flex;
-  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
   margin-bottom: 10px;
+  background-color: #f8f9fa;
+  border: 2px solid #e9ecef;
+  border-radius: 10px;
 }
 
 .editor-toolbar button {
-  padding: 8px 15px;
-  font-size: 18px;
-  border: 2px solid #ddd;
-  border-radius: 6px;
+  min-width: 44px;
+  height: 44px;
+  padding: 8px 12px;
+  font-size: 16px;
+  border: none;
+  border-radius: 8px;
   background-color: white;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
 .editor-toolbar button:hover {
+  background-color: #3498db;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(52, 152, 219, 0.3);
+}
+
+.editor-toolbar button:active {
+  transform: translateY(0);
+}
+
+.editor-toolbar select {
+  height: 44px;
+  padding: 8px 12px;
+  font-size: 16px;
+  border: none;
+  border-radius: 8px;
+  background-color: white;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.editor-toolbar select:hover {
   background-color: #f0f0f0;
+}
+
+.editor-toolbar select:focus {
+  outline: 2px solid #3498db;
+}
+
+.editor-toolbar input[type="color"] {
+  width: 44px;
+  height: 44px;
+  padding: 4px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  background-color: white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.editor-toolbar input[type="color"]:hover {
+  transform: scale(1.05);
 }
 
 .editor {
