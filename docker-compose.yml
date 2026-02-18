@@ -1,0 +1,12 @@
+version: '3'
+
+services:
+  homenote:
+    build: .
+    container_name: homenote
+    restart: always
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/app/data
+      - ./uploads:/app/uploads
