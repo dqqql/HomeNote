@@ -1,0 +1,17 @@
+#!/bin/bash
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+
+cd "$PROJECT_DIR"
+
+echo "正在停止 HomeNote 项目..."
+docker-compose stop
+
+if [ $? -eq 0 ]; then
+    echo "✅ HomeNote 项目已停止！"
+    echo "📊 项目状态："
+    docker-compose ps
+else
+    echo "❌ HomeNote 项目停止失败！"
+fi

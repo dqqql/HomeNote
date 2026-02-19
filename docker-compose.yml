@@ -1,12 +1,29 @@
-version: '3'
+version: '3.8'
 
 services:
   homenote:
     build: .
     container_name: homenote
-    restart: always
+    restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     volumes:
       - ./data:/app/data
       - ./uploads:/app/uploads
+    networks:
+      - homenote-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  homenote-network:
+    driver: bridge
