@@ -19,13 +19,33 @@ const roleColors = {
   daughter: 'orange'
 };
 
+let pendingRoleSelection = null;
+
 document.addEventListener('DOMContentLoaded', function() {
+  initForms();
   if (currentRole) {
     showMainApp();
   }
   initColorPicker();
   document.getElementById('note-form').addEventListener('submit', saveNote);
 });
+
+function initForms() {
+  const setPasswordForm = document.getElementById('set-password-form');
+  if (setPasswordForm) {
+    setPasswordForm.addEventListener('submit', handleSetPassword);
+  }
+  
+  const verifyPasswordForm = document.getElementById('verify-password-form');
+  if (verifyPasswordForm) {
+    verifyPasswordForm.addEventListener('submit', handleVerifyPassword);
+  }
+  
+  const changePasswordForm = document.getElementById('change-password-form');
+  if (changePasswordForm) {
+    changePasswordForm.addEventListener('submit', handleChangePassword);
+  }
+}
 
 function initColorPicker() {
   const colorPicker = document.getElementById('note-color-picker');
@@ -43,17 +63,269 @@ function initColorPicker() {
   }
 }
 
-function selectRole(role) {
-  currentRole = role;
-  localStorage.setItem('homenote_role', role);
-  showMainApp();
+async function selectRole(role) {
+  try {
+    const response = await fetch('/api/roles/' + role + '/has-password');
+    const data = await response.json();
+    
+    if (data.hasPassword) {
+      showVerifyPasswordModal(role, 'login');
+    } else {
+      currentRole = role;
+      localStorage.setItem('homenote_role', role);
+      showMainApp();
+    }
+  } catch (error) {
+    console.error('Error checking password:', error);
+    currentRole = role;
+    localStorage.setItem('homenote_role', role);
+    showMainApp();
+  }
+}
+
+function showSetPasswordModal(role) {
+  document.getElementById('set-password-modal').style.display = 'flex';
+  document.getElementById('set-new-password').value = '';
+  document.getElementById('set-confirm-password').value = '';
+  hideError('set-password-error');
+}
+
+function closeSetPasswordModal() {
+  document.getElementById('set-password-modal').style.display = 'none';
+  pendingRoleSelection = null;
+}
+
+async function handleSetPassword(e) {
+  e.preventDefault();
+  const newPassword = document.getElementById('set-new-password').value;
+  const confirmPassword = document.getElementById('set-confirm-password').value;
+  
+  if (newPassword !== confirmPassword) {
+    showError('set-password-error', '两次输入的密码不一致');
+    return;
+  }
+  
+  try {
+    const response = await fetch('/api/roles/' + pendingRoleSelection + '/set-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: newPassword })
+    });
+    
+    if (!response.ok) {
+      const data = await response.json();
+      showError('set-password-error', data.error);
+      return;
+    }
+    
+    closeSetPasswordModal();
+    
+    if (currentRole === pendingRoleSelection) {
+      alert('密码设置成功！');
+      updatePasswordButtons();
+    } else {
+      currentRole = pendingRoleSelection;
+      localStorage.setItem('homenote_role', currentRole);
+      pendingRoleSelection = null;
+      showMainApp();
+    }
+    pendingRoleSelection = null;
+  } catch (error) {
+    console.error('Error setting password:', error);
+    showError('set-password-error', '设置密码失败，请重试');
+  }
+}
+
+function showVerifyPasswordModal(role, action) {
+  document.getElementById('verify-modal-title').textContent = action === 'login' ? '验证密码' : '切换角色';
+  document.getElementById('verify-modal-hint').textContent = '请输入' + roleNames[role] + '的密码';
+  document.getElementById('verify-target-role').value = role;
+  document.getElementById('verify-action').value = action;
+  document.getElementById('verify-password').value = '';
+  hideError('verify-password-error');
+  document.getElementById('verify-password-modal').style.display = 'flex';
+}
+
+function closeVerifyPasswordModal() {
+  document.getElementById('verify-password-modal').style.display = 'none';
+}
+
+async function handleVerifyPassword(e) {
+  e.preventDefault();
+  const targetRole = document.getElementById('verify-target-role').value;
+  const action = document.getElementById('verify-action').value;
+  const password = document.getElementById('verify-password').value;
+  
+  try {
+    const response = await fetch('/api/roles/' + targetRole + '/verify-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: password })
+    });
+    
+    if (response.status === 429) {
+      const data = await response.json();
+      showError('verify-password-error', data.error);
+      return;
+    }
+    
+    const data = await response.json();
+    if (data.valid) {
+      closeVerifyPasswordModal();
+      closeSettings();
+      currentRole = targetRole;
+      localStorage.setItem('homenote_role', currentRole);
+      updateRoleBadge();
+      updatePasswordButtons();
+      loadNotes();
+    } else {
+      showError('verify-password-error', data.error);
+    }
+  } catch (error) {
+    console.error('Error verifying password:', error);
+    showError('verify-password-error', '验证失败，请重试');
+  }
+}
+
+function showSwitchRoleModal() {
+  closeSettings();
+  document.getElementById('role-select').style.display = 'block';
+  document.getElementById('main-app').style.display = 'none';
+}
+
+async function quickSwitchRole(role) {
+  if (role === currentRole) {
+    closeSettings();
+    return;
+  }
+  
+  try {
+    const response = await fetch('/api/roles/' + role + '/has-password');
+    const data = await response.json();
+    
+    if (data.hasPassword) {
+      showVerifyPasswordModal(role, 'switch');
+    } else {
+      currentRole = role;
+      localStorage.setItem('homenote_role', role);
+      updateRoleBadge();
+      updatePasswordButtons();
+      loadNotes();
+      closeSettings();
+    }
+  } catch (error) {
+    console.error('Error checking password:', error);
+    currentRole = role;
+    localStorage.setItem('homenote_role', role);
+    updateRoleBadge();
+    updatePasswordButtons();
+    loadNotes();
+    closeSettings();
+  }
+}
+
+function showChangePasswordModal() {
+  closeSettings();
+  document.getElementById('change-old-password').value = '';
+  document.getElementById('change-new-password').value = '';
+  document.getElementById('change-confirm-password').value = '';
+  hideError('change-password-error');
+  document.getElementById('change-password-modal').style.display = 'flex';
+}
+
+function closeChangePasswordModal() {
+  document.getElementById('change-password-modal').style.display = 'none';
+}
+
+async function handleChangePassword(e) {
+  e.preventDefault();
+  const oldPassword = document.getElementById('change-old-password').value;
+  const newPassword = document.getElementById('change-new-password').value;
+  const confirmPassword = document.getElementById('change-confirm-password').value;
+  
+  if (newPassword !== confirmPassword) {
+    showError('change-password-error', '两次输入的新密码不一致');
+    return;
+  }
+  
+  try {
+    const response = await fetch('/api/roles/' + currentRole + '/change-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ oldPassword: oldPassword, newPassword: newPassword })
+    });
+    
+    if (response.status === 429) {
+      const data = await response.json();
+      showError('change-password-error', data.error);
+      return;
+    }
+    
+    const data = await response.json();
+    if (data.success) {
+      alert('密码修改成功！');
+      closeChangePasswordModal();
+    } else {
+      showError('change-password-error', data.error);
+    }
+  } catch (error) {
+    console.error('Error changing password:', error);
+    showError('change-password-error', '修改密码失败，请重试');
+  }
+}
+
+function togglePassword(inputId) {
+  const input = document.getElementById(inputId);
+  if (input.type === 'password') {
+    input.type = 'text';
+  } else {
+    input.type = 'password';
+  }
+}
+
+function showError(elementId, message) {
+  const errorEl = document.getElementById(elementId);
+  errorEl.textContent = message;
+  errorEl.style.display = 'block';
+}
+
+function hideError(elementId) {
+  const errorEl = document.getElementById(elementId);
+  errorEl.style.display = 'none';
 }
 
 function showMainApp() {
   document.getElementById('role-select').style.display = 'none';
   document.getElementById('main-app').style.display = 'block';
   updateRoleBadge();
+  updatePasswordButtons();
   loadNotes();
+}
+
+async function updatePasswordButtons() {
+  try {
+    const response = await fetch('/api/roles/' + currentRole + '/has-password');
+    const data = await response.json();
+    const setPasswordBtn = document.getElementById('set-password-btn');
+    const changePasswordBtn = document.getElementById('change-password-btn');
+    
+    if (data.hasPassword) {
+      setPasswordBtn.style.display = 'none';
+      changePasswordBtn.style.display = 'inline-block';
+    } else {
+      setPasswordBtn.style.display = 'inline-block';
+      changePasswordBtn.style.display = 'none';
+    }
+  } catch (error) {
+    console.error('Error checking password:', error);
+  }
+}
+
+function showSetPasswordFromSettings() {
+  closeSettings();
+  pendingRoleSelection = currentRole;
+  document.getElementById('set-password-modal').querySelector('h2').textContent = '设置密码';
+  showSetPasswordModal(currentRole);
 }
 
 function updateRoleBadge() {
