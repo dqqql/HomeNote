@@ -1,4 +1,8 @@
 
+const emojiList = [
+  '😀', '😁', '😂', '🤣', '😃', '😄', '😅', '😆', '😉', '😊', '😋', '😎', '😍', '😘', '🥰', '😗', '😙', '🥲', '😚', '🙂', '🤗', '🤩', '🤔', '🤨', '😐', '😑', '😶', '🙄', '😏', '😣', '😥', '😮', '🤐', '😯', '😪', '😫', '😴', '😌', '😛', '😜', '😝', '🤤', '😒', '😓', '😔', '😕', '🙃', '🤑', '😲', '☹', '🙁', '😖', '😞', '😟', '😤', '😢', '😭', '😦', '😧', '😨', '😩', '🤯', '😬', '😰', '😱', '🥵', '🥶', '😳', '🤪', '😵', '🥴', '😠', '😡', '🤬', '😷', '🤒', '🤕', '🤢', '🤮', '🤧', '😇', '🥺', '🤠', '🤡', '🥳', '🥴', '🥱', '🤥', '🤫', '🤭', '🧐', '🤓', '😈', '👿', '👹', '👺', '💀', '👻', '👽', '🤖', '💩'
+];
+
 let currentRole = localStorage.getItem('homenote_role');
 let currentTab = 'notes';
 let pendingImage = null;
@@ -379,6 +383,24 @@ async function loadNotes() {
   }
 }
 
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  return month + '.' + day;
+}
+
+function formatCommentTime(dateStr) {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  return month + '/' + day + ' ' + hours + ':' + minutes;
+}
+
 function renderNotes(notes, containerId) {
   const container = document.getElementById(containerId);
   
@@ -388,9 +410,13 @@ function renderNotes(notes, containerId) {
   }
   
   container.innerHTML = notes.map(function(note) {
-    return '<div class="note-card ' + (note.color ? 'color-' + note.color : '') + '">' +
+    const dateStr = formatDate(note.created_at);
+    return '<div class="note-card ' + (note.color ? 'color-' + note.color : '') + '" data-note-id="' + note.id + '">' +
       '<div class="note-header">' +
-        '<h3 class="note-title">' + escapeHtml(note.title) + '</h3>' +
+        '<div class="note-title-wrapper">' +
+          '<h3 class="note-title">' + escapeHtml(note.title) + '</h3>' +
+          '<span class="note-date">' + dateStr + '</span>' +
+        '</div>' +
         '<div class="note-meta">' +
           '<span class="note-role ' + note.role + '">' + (roleNames[note.role] || note.role) + '</span>' +
           '<div class="note-actions">' +
@@ -401,11 +427,29 @@ function renderNotes(notes, containerId) {
       '</div>' +
       '<div class="note-content">' + note.content + '</div>' +
       '<div class="note-images" id="note-images-' + note.id + '"></div>' +
+      '<div class="note-comments-section">' +
+        '<div class="comments-list" id="comments-list-' + note.id + '"></div>' +
+        '<div class="comment-input-area">' +
+          '<div class="comment-input-wrapper">' +
+            '<input type="text" class="comment-input" id="comment-input-' + note.id + '" placeholder="写评论...">' +
+            '<button class="emoji-btn" onclick="toggleEmojiPicker(' + note.id + ')">😊</button>' +
+            '<div class="emoji-picker" id="emoji-picker-' + note.id + '">' +
+              '<div class="emoji-grid">' +
+                emojiList.map(function(e) { return '<span class="emoji-item" onclick="insertEmoji(' + note.id + ', \'' + e + '\')">' + e + '</span>'; }).join('') +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<button class="comment-send-btn" onclick="submitComment(' + note.id + ')">' +
+            '<svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>' +
+          '</button>' +
+        '</div>' +
+      '</div>' +
     '</div>';
   }).join('');
   
   notes.forEach(function(note) {
     loadNoteImages(note.id);
+    loadComments(note.id);
   });
 }
 
@@ -431,6 +475,13 @@ function showNoteModal(isPrivate) {
   document.getElementById('modal-title').textContent = isPrivate ? '新建日记' : '新建便签';
   document.getElementById('note-form').reset();
   document.getElementById('note-id').value = '';
+  
+  const now = new Date();
+  const month = now.getMonth() + 1;
+  const day = now.getDate();
+  const defaultTitle = month + '.' + day;
+  document.getElementById('note-title').value = defaultTitle;
+  
   document.getElementById('note-content').innerHTML = '';
   document.getElementById('image-preview').innerHTML = '';
   pendingImage = null;
@@ -579,6 +630,93 @@ function escapeHtml(text) {
   div.textContent = text;
   return div.innerHTML;
 }
+
+async function loadComments(noteId) {
+  try {
+    const response = await fetch('/api/notes/' + noteId + '/comments');
+    const comments = await response.json();
+    const container = document.getElementById('comments-list-' + noteId);
+    if (container) {
+      if (comments.length === 0) {
+        container.innerHTML = '';
+        return;
+      }
+      container.innerHTML = comments.map(function(comment) {
+        return '<div class="comment-item">' +
+          '<div class="comment-avatar">' +
+            '<svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>' +
+          '</div>' +
+          '<div class="comment-body">' +
+            '<div class="comment-header">' +
+              '<span class="comment-author">' + (roleNames[comment.role] || comment.role || '匿名') + '</span>' +
+              '<span class="comment-time">' + formatCommentTime(comment.created_at) + '</span>' +
+            '</div>' +
+            '<div class="comment-content">' + escapeHtml(comment.content) + '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+  } catch (error) {
+    console.error('Error loading comments:', error);
+  }
+}
+
+function toggleEmojiPicker(noteId) {
+  const picker = document.getElementById('emoji-picker-' + noteId);
+  if (picker) {
+    picker.classList.toggle('show');
+  }
+}
+
+function insertEmoji(noteId, emoji) {
+  const input = document.getElementById('comment-input-' + noteId);
+  if (input) {
+    input.value += emoji;
+    input.focus();
+  }
+  const picker = document.getElementById('emoji-picker-' + noteId);
+  if (picker) {
+    picker.classList.remove('show');
+  }
+}
+
+async function submitComment(noteId) {
+  const input = document.getElementById('comment-input-' + noteId);
+  if (!input) return;
+  
+  const content = input.value.trim();
+  if (!content) {
+    alert('请输入评论内容');
+    return;
+  }
+  
+  try {
+    const response = await fetch('/api/notes/' + noteId + '/comments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role: currentRole, content: content })
+    });
+    
+    if (response.ok) {
+      input.value = '';
+      loadComments(noteId);
+    } else {
+      const data = await response.json();
+      alert(data.error || '评论失败');
+    }
+  } catch (error) {
+    console.error('Error submitting comment:', error);
+    alert('评论失败，请重试');
+  }
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.emoji-btn') && !e.target.closest('.emoji-picker')) {
+    document.querySelectorAll('.emoji-picker.show').forEach(function(picker) {
+      picker.classList.remove('show');
+    });
+  }
+});
 
 window.onclick = function(event) {
   if (event.target.classList.contains('modal')) {

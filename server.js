@@ -28,6 +28,7 @@ db.serialize(function() {
   db.run('CREATE TABLE IF NOT EXISTS role_passwords (role TEXT PRIMARY KEY, password_hash TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)');
   db.run('CREATE TABLE IF NOT EXISTS system_settings (key TEXT PRIMARY KEY, value TEXT, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)');
   db.run('CREATE TABLE IF NOT EXISTS login_attempts (id INTEGER PRIMARY KEY AUTOINCREMENT, role TEXT, attempt_time DATETIME DEFAULT CURRENT_TIMESTAMP, ip TEXT)');
+  db.run('CREATE TABLE IF NOT EXISTS comments (id INTEGER PRIMARY KEY AUTOINCREMENT, note_id INTEGER, role TEXT, content TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (note_id) REFERENCES notes (id))');
   initSystemSettings();
 });
 
@@ -312,6 +313,34 @@ app.post('/api/roles/:role/change-password', function(req, res) {
         });
       });
     });
+  });
+});
+
+app.get('/api/notes/:id/comments', function(req, res) {
+  db.all('SELECT * FROM comments WHERE note_id = ? ORDER BY created_at ASC', [req.params.id], function(err, rows) {
+    if (err) res.status(500).json({ error: err.message });
+    else res.json(rows);
+  });
+});
+
+app.post('/api/notes/:id/comments', function(req, res) {
+  const role = req.body.role || '';
+  const content = req.body.content || '';
+  
+  if (!content.trim()) {
+    return res.status(400).json({ error: '评论内容不能为空' });
+  }
+  
+  db.run('INSERT INTO comments (note_id, role, content) VALUES (?, ?, ?)', [req.params.id, role, content], function(err) {
+    if (err) res.status(500).json({ error: err.message });
+    else res.json({ id: this.lastID });
+  });
+});
+
+app.delete('/api/comments/:id', function(req, res) {
+  db.run('DELETE FROM comments WHERE id = ?', [req.params.id], function(err) {
+    if (err) res.status(500).json({ error: err.message });
+    else res.json({ success: true });
   });
 });
 
