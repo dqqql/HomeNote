@@ -361,7 +361,12 @@ function showTab(tab) {
   event.target.classList.add('active');
   document.getElementById('notes-tab').style.display = tab === 'notes' ? 'block' : 'none';
   document.getElementById('private-tab').style.display = tab === 'private' ? 'block' : 'none';
-  loadNotes();
+  document.getElementById('todo-tab').style.display = tab === 'todo' ? 'block' : 'none';
+  if (tab === 'todo') {
+    renderCalendar();
+  } else {
+    loadNotes();
+  }
 }
 
 async function loadNotes() {
@@ -723,3 +728,277 @@ window.onclick = function(event) {
     event.target.style.display = 'none';
   }
 };
+
+let currentDate = new Date();
+let selectedTodoColor = '';
+let currentTodoId = null;
+
+function initTodoColorPicker() {
+  const colorPicker = document.getElementById('todo-color-picker');
+  if (colorPicker) {
+    colorPicker.addEventListener('click', function(e) {
+      const option = e.target.closest('.color-option');
+      if (option) {
+        document.querySelectorAll('#todo-color-picker .color-option').forEach(function(opt) {
+          opt.classList.remove('selected');
+        });
+        option.classList.add('selected');
+        selectedTodoColor = option.getAttribute('data-color');
+      }
+    });
+  }
+}
+
+function renderCalendar() {
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  const title = document.getElementById('calendar-title');
+  title.textContent = year + '年' + (month + 1) + '月';
+
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const startDay = firstDay.getDay();
+  const daysInMonth = lastDay.getDate();
+
+  const today = new Date();
+  const todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+
+  const startDate = new Date(year, month, 1 - startDay);
+  const endDate = new Date(year, month + 1, 0 + (6 - lastDay.getDay()));
+  const startDateStr = startDate.getFullYear() + '-' + String(startDate.getMonth() + 1).padStart(2, '0') + '-' + String(startDate.getDate()).padStart(2, '0');
+  const endDateStr = endDate.getFullYear() + '-' + String(endDate.getMonth() + 1).padStart(2, '0') + '-' + String(endDate.getDate()).padStart(2, '0');
+
+  loadTodos(startDateStr, endDateStr, function() {
+    const calendarDays = document.getElementById('calendar-days');
+    calendarDays.innerHTML = '';
+
+    for (let i = 0; i < startDay; i++) {
+      const day = new Date(year, month, -startDay + i + 1);
+      const dayElement = createDayElement(day, true, todayStr);
+      calendarDays.appendChild(dayElement);
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(year, month, day);
+      const dayElement = createDayElement(date, false, todayStr);
+      calendarDays.appendChild(dayElement);
+    }
+
+    const remainingDays = 42 - (startDay + daysInMonth);
+    for (let i = 1; i <= remainingDays; i++) {
+      const day = new Date(year, month + 1, i);
+      const dayElement = createDayElement(day, true, todayStr);
+      calendarDays.appendChild(dayElement);
+    }
+  });
+}
+
+function createDayElement(date, isOtherMonth, todayStr) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const dateStr = year + '-' + month + '-' + day;
+
+  const dayElement = document.createElement('div');
+  dayElement.className = 'calendar-day';
+  if (isOtherMonth) {
+    dayElement.classList.add('other-month');
+  }
+  if (dateStr === todayStr) {
+    dayElement.classList.add('today');
+  }
+
+  const dayNumber = document.createElement('div');
+  dayNumber.className = 'calendar-day-number';
+  dayNumber.textContent = date.getDate();
+  dayElement.appendChild(dayNumber);
+
+  const todosContainer = document.createElement('div');
+  todosContainer.className = 'calendar-todos';
+
+  const dayTodos = currentTodos.filter(function(todo) {
+    return todo.date === dateStr;
+  });
+
+  dayTodos.forEach(function(todo) {
+    const todoElement = createTodoElement(todo);
+    todosContainer.appendChild(todoElement);
+  });
+
+  dayElement.appendChild(todosContainer);
+
+  dayElement.addEventListener('click', function(e) {
+    if (!e.target.closest('.calendar-todo')) {
+      openTodoModal(dateStr);
+    }
+  });
+
+  return dayElement;
+}
+
+function createTodoElement(todo) {
+  const todoElement = document.createElement('div');
+  todoElement.className = 'calendar-todo';
+  if (todo.color) {
+    todoElement.classList.add('color-' + todo.color);
+  } else {
+    todoElement.style.backgroundColor = '#f0f0f0';
+  }
+
+  const roleColors = {
+    father: '#3498db',
+    mother: '#e91e63',
+    son: '#27ae60',
+    daughter: '#ff9800'
+  };
+
+  const roleBadge = document.createElement('span');
+  roleBadge.className = 'calendar-todo-role';
+  roleBadge.textContent = roleNames[todo.role]?.split(' ')[0] || todo.role;
+  roleBadge.style.backgroundColor = roleColors[todo.role] || '#999';
+
+  const contentSpan = document.createElement('span');
+  contentSpan.className = 'calendar-todo-content';
+  contentSpan.innerHTML = stripHtml(todo.content);
+
+  todoElement.appendChild(roleBadge);
+  todoElement.appendChild(contentSpan);
+
+  todoElement.addEventListener('click', function(e) {
+    e.stopPropagation();
+    editTodo(todo);
+  });
+
+  return todoElement;
+}
+
+function stripHtml(html) {
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  return div.textContent || div.innerText || '';
+}
+
+async function loadTodos(startDate, endDate, callback) {
+  try {
+    const response = await fetch('/api/todos?startDate=' + startDate + '&endDate=' + endDate);
+    currentTodos = await response.json();
+    if (callback) callback();
+  } catch (error) {
+    console.error('Error loading todos:', error);
+    currentTodos = [];
+    if (callback) callback();
+  }
+}
+
+function prevMonth() {
+  currentDate.setMonth(currentDate.getMonth() - 1);
+  renderCalendar();
+}
+
+function nextMonth() {
+  currentDate.setMonth(currentDate.getMonth() + 1);
+  renderCalendar();
+}
+
+function openTodoModal(dateStr, todoId) {
+  selectedTodoColor = roleColors[currentRole] || '';
+  document.getElementById('todo-modal').style.display = 'flex';
+  document.getElementById('todo-date').value = dateStr;
+  document.getElementById('todo-id').value = todoId || '';
+  document.getElementById('todo-content').innerHTML = '';
+  document.getElementById('todo-modal-title').textContent = todoId ? '编辑待办' : '新建待办';
+  document.getElementById('todo-delete-btn').style.display = todoId ? 'inline-block' : 'none';
+
+  const date = new Date(dateStr);
+  document.getElementById('todo-modal-date').textContent = date.getFullYear() + '年' + (date.getMonth() + 1) + '月' + date.getDate() + '日';
+
+  document.querySelectorAll('#todo-color-picker .color-option').forEach(function(opt) {
+    opt.classList.remove('selected');
+  });
+  const colorOption = document.querySelector('#todo-color-picker .color-option[data-color="' + selectedTodoColor + '"]');
+  if (colorOption) {
+    colorOption.classList.add('selected');
+  }
+
+  const todoForm = document.getElementById('todo-form');
+  todoForm.removeEventListener('submit', saveTodo);
+  todoForm.addEventListener('submit', saveTodo);
+}
+
+function editTodo(todo) {
+  currentTodoId = todo.id;
+  openTodoModal(todo.date, todo.id);
+  document.getElementById('todo-content').innerHTML = todo.content;
+  selectedTodoColor = todo.color || '';
+
+  document.querySelectorAll('#todo-color-picker .color-option').forEach(function(opt) {
+    opt.classList.remove('selected');
+  });
+  const colorOption = document.querySelector('#todo-color-picker .color-option[data-color="' + selectedTodoColor + '"]');
+  if (colorOption) {
+    colorOption.classList.add('selected');
+  }
+}
+
+function closeTodoModal() {
+  document.getElementById('todo-modal').style.display = 'none';
+  currentTodoId = null;
+}
+
+function formatTodoText(command) {
+  const editor = document.getElementById('todo-content');
+  editor.focus();
+
+  if (command === 'bold') {
+    document.execCommand('bold', false, null);
+  } else if (command === 'underline') {
+    document.execCommand('underline', false, null);
+  }
+}
+
+async function saveTodo(e) {
+  e.preventDefault();
+
+  const todoId = document.getElementById('todo-id').value;
+  const date = document.getElementById('todo-date').value;
+  const content = document.getElementById('todo-content').innerHTML;
+  const role = localStorage.getItem('homenote_role') || currentRole || '';
+
+  try {
+    if (todoId) {
+      await fetch('/api/todos/' + todoId, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: content, color: selectedTodoColor })
+      });
+    } else {
+      await fetch('/api/todos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: date, content: content, role: role, color: selectedTodoColor })
+      });
+    }
+
+    closeTodoModal();
+    renderCalendar();
+  } catch (error) {
+    console.error('Error saving todo:', error);
+    alert('保存失败，请重试');
+  }
+}
+
+async function deleteTodo() {
+  if (!confirm('确定要删除这条待办吗？')) return;
+
+  const todoId = document.getElementById('todo-id').value;
+  if (!todoId) return;
+
+  try {
+    await fetch('/api/todos/' + todoId, { method: 'DELETE' });
+    closeTodoModal();
+    renderCalendar();
+  } catch (error) {
+    console.error('Error deleting todo:', error);
+    alert('删除失败，请重试');
+  }
+}

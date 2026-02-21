@@ -29,6 +29,7 @@ db.serialize(function() {
   db.run('CREATE TABLE IF NOT EXISTS system_settings (key TEXT PRIMARY KEY, value TEXT, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)');
   db.run('CREATE TABLE IF NOT EXISTS login_attempts (id INTEGER PRIMARY KEY AUTOINCREMENT, role TEXT, attempt_time DATETIME DEFAULT CURRENT_TIMESTAMP, ip TEXT)');
   db.run('CREATE TABLE IF NOT EXISTS comments (id INTEGER PRIMARY KEY AUTOINCREMENT, note_id INTEGER, role TEXT, content TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (note_id) REFERENCES notes (id))');
+  db.run('CREATE TABLE IF NOT EXISTS todos (id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT, content TEXT, role TEXT, color TEXT DEFAULT "", created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)');
   initSystemSettings();
 });
 
@@ -339,6 +340,74 @@ app.post('/api/notes/:id/comments', function(req, res) {
 
 app.delete('/api/comments/:id', function(req, res) {
   db.run('DELETE FROM comments WHERE id = ?', [req.params.id], function(err) {
+    if (err) res.status(500).json({ error: err.message });
+    else res.json({ success: true });
+  });
+});
+
+app.get('/api/todos', function(req, res) {
+  const date = req.query.date;
+  const startDate = req.query.startDate;
+  const endDate = req.query.endDate;
+  let sql = 'SELECT * FROM todos';
+  let params = [];
+
+  if (date) {
+    sql += ' WHERE date = ?';
+    params.push(date);
+  } else if (startDate && endDate) {
+    sql += ' WHERE date >= ? AND date <= ?';
+    params.push(startDate, endDate);
+  }
+
+  sql += ' ORDER BY date ASC, created_at ASC';
+
+  db.all(sql, params, function(err, rows) {
+    if (err) res.status(500).json({ error: err.message });
+    else res.json(rows);
+  });
+});
+
+app.get('/api/todos/:id', function(req, res) {
+  db.get('SELECT * FROM todos WHERE id = ?', [req.params.id], function(err, row) {
+    if (err) res.status(500).json({ error: err.message });
+    else if (!row) res.status(404).json({ error: 'Todo not found' });
+    else res.json(row);
+  });
+});
+
+app.post('/api/todos', function(req, res) {
+  const date = req.body.date || '';
+  const content = req.body.content || '';
+  const role = req.body.role || '';
+  let color = req.body.color;
+  if (color === undefined || color === null) color = '';
+
+  db.run('INSERT INTO todos (date, content, role, color) VALUES (?, ?, ?, ?)', [date, content, role, color], function(err) {
+    if (err) {
+      res.status(500).json({ error: err.message });
+    } else {
+      res.json({ id: this.lastID });
+    }
+  });
+});
+
+app.put('/api/todos/:id', function(req, res) {
+  const content = req.body.content || '';
+  let color = req.body.color;
+  if (color === undefined || color === null) color = '';
+
+  db.run('UPDATE todos SET content = ?, color = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [content, color, req.params.id], function(err) {
+    if (err) {
+      res.status(500).json({ error: err.message });
+    } else {
+      res.json({ success: true });
+    }
+  });
+});
+
+app.delete('/api/todos/:id', function(req, res) {
+  db.run('DELETE FROM todos WHERE id = ?', [req.params.id], function(err) {
     if (err) res.status(500).json({ error: err.message });
     else res.json({ success: true });
   });

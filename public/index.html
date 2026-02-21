@@ -43,6 +43,7 @@
       <nav class="nav">
         <button class="nav-btn active" onclick="showTab('notes')">📝 公共便签</button>
         <button class="nav-btn" onclick="showTab('private')">🔒 私密日记</button>
+        <button class="nav-btn" onclick="showTab('todo')">📅 待办</button>
       </nav>
 
       <div class="search-bar">
@@ -59,6 +60,26 @@
         <div id="private-tab" class="tab-content" style="display: none;">
           <button class="btn-primary" onclick="showNoteModal(true)">➕ 新建日记</button>
           <div id="private-list" class="notes-list"></div>
+        </div>
+
+        <div id="todo-tab" class="tab-content" style="display: none;">
+          <div class="calendar-container">
+            <div class="calendar-header">
+              <button class="btn-small" onclick="prevMonth()">&#9664;</button>
+              <h2 id="calendar-title"></h2>
+              <button class="btn-small" onclick="nextMonth()">&#9654;</button>
+            </div>
+            <div class="calendar-weekdays">
+              <div>日</div>
+              <div>一</div>
+              <div>二</div>
+              <div>三</div>
+              <div>四</div>
+              <div>五</div>
+              <div>六</div>
+            </div>
+            <div id="calendar-days" class="calendar-days"></div>
+          </div>
         </div>
       </div>
 
@@ -240,6 +261,47 @@
             <div class="form-actions">
               <button type="button" class="btn-cancel" onclick="closeChangePasswordModal()">取消</button>
               <button type="submit" class="btn-primary">修改密码</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div id="todo-modal" class="modal" style="display: none;">
+        <div class="modal-content todo-modal-content">
+          <span class="close" onclick="closeTodoModal()">&times;</span>
+          <h2 id="todo-modal-title">编辑待办</h2>
+          <p id="todo-modal-date" class="todo-date-display"></p>
+          <form id="todo-form">
+            <input type="hidden" id="todo-id">
+            <input type="hidden" id="todo-date">
+            <div class="form-group">
+              <label>内容</label>
+              <div class="todo-editor-toolbar">
+                <button type="button" onclick="formatTodoText('bold')"><b>B</b></button>
+                <button type="button" onclick="formatTodoText('underline')"><u>U</u></button>
+              </div>
+              <div id="todo-content" contenteditable="true" class="todo-editor"></div>
+            </div>
+            <div class="form-group">
+              <label>颜色</label>
+              <div class="color-picker-group" id="todo-color-picker">
+                <div class="color-option" data-color="" title="默认"></div>
+                <div class="color-option red" data-color="red" title="红色"></div>
+                <div class="color-option green" data-color="green" title="绿色"></div>
+                <div class="color-option blue" data-color="blue" title="蓝色"></div>
+                <div class="color-option yellow" data-color="yellow" title="黄色"></div>
+                <div class="color-option purple" data-color="purple" title="紫色"></div>
+                <div class="color-option orange" data-color="orange" title="橙色"></div>
+                <div class="color-option pink" data-color="pink" title="粉色"></div>
+                <div class="color-option teal" data-color="teal" title="青色"></div>
+                <div class="color-option indigo" data-color="indigo" title="靛蓝"></div>
+                <div class="color-option brown" data-color="brown" title="棕色"></div>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn-cancel" onclick="closeTodoModal()">取消</button>
+              <button type="button" class="btn-delete" id="todo-delete-btn" style="display: none;" onclick="deleteTodo()">删除</button>
+              <button type="submit" class="btn-primary">保存</button>
             </div>
           </form>
         </div>

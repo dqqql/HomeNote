@@ -1114,3 +1114,231 @@ body {
     grid-template-columns: repeat(6, 1fr);
   }
 }
+
+.calendar-container {
+  background-color: white;
+  border-radius: 12px;
+  border: 2px solid #ecf0f1;
+  overflow: hidden;
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 30px;
+  background-color: #3498db;
+  color: white;
+}
+
+.calendar-header h2 {
+  font-size: 24px;
+  margin: 0;
+}
+
+.calendar-header .btn-small {
+  background-color: rgba(255,255,255,0.2);
+  color: white;
+}
+
+.calendar-header .btn-small:hover {
+  background-color: rgba(255,255,255,0.3);
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background-color: #ecf0f1;
+  padding: 15px 0;
+  text-align: center;
+  font-weight: bold;
+  color: #555;
+  font-size: 16px;
+}
+
+.calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  background-color: #ecf0f1;
+}
+
+.calendar-day {
+  background-color: white;
+  min-height: 100px;
+  padding: 10px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  position: relative;
+}
+
+.calendar-day:hover {
+  background-color: #f8f9fa;
+}
+
+.calendar-day.other-month {
+  background-color: #f8f9fa;
+  color: #999;
+}
+
+.calendar-day.today {
+  background-color: #e3f2fd;
+}
+
+.calendar-day-number {
+  font-weight: bold;
+  font-size: 18px;
+  margin-bottom: 8px;
+  color: #2c3e50;
+}
+
+.calendar-day.today .calendar-day-number {
+  color: #3498db;
+}
+
+.calendar-todos {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.calendar-todo {
+  font-size: 12px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.calendar-todo:hover {
+  opacity: 0.8;
+}
+
+.calendar-todo-role {
+  font-size: 10px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  color: white;
+  flex-shrink: 0;
+}
+
+.calendar-todo-content {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendar-todo.color-red { background-color: #fef5f5; }
+.calendar-todo.color-green { background-color: #f0fdf4; }
+.calendar-todo.color-blue { background-color: #eff6ff; }
+.calendar-todo.color-yellow { background-color: #fefce8; }
+.calendar-todo.color-purple { background-color: #faf5ff; }
+.calendar-todo.color-orange { background-color: #fff7ed; }
+.calendar-todo.color-pink { background-color: #fdf2f8; }
+.calendar-todo.color-teal { background-color: #f0fdfa; }
+.calendar-todo.color-indigo { background-color: #eef2ff; }
+.calendar-todo.color-brown { background-color: #fdf8f6; }
+
+.todo-date-display {
+  font-size: 18px;
+  color: #666;
+  margin-bottom: 20px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.todo-editor-toolbar {
+  display: flex;
+  gap: 8px;
+  padding: 10px;
+  margin-bottom: 10px;
+  background-color: #f8f9fa;
+  border: 2px solid #e9ecef;
+  border-radius: 10px;
+}
+
+.todo-editor-toolbar button {
+  min-width: 44px;
+  height: 44px;
+  padding: 8px 12px;
+  font-size: 16px;
+  border: none;
+  border-radius: 8px;
+  background-color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.todo-editor-toolbar button:hover {
+  background-color: #3498db;
+  color: white;
+  transform: translateY(-1px);
+}
+
+.todo-editor {
+  min-height: 150px;
+  padding: 15px;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  font-size: 18px;
+  line-height: 1.8;
+}
+
+@media (max-width: 768px) {
+  .calendar-header {
+    padding: 15px;
+  }
+  
+  .calendar-header h2 {
+    font-size: 18px;
+  }
+  
+  .calendar-weekdays {
+    font-size: 14px;
+    padding: 10px 0;
+  }
+  
+  .calendar-day {
+    min-height: 70px;
+    padding: 6px;
+  }
+  
+  .calendar-day-number {
+    font-size: 14px;
+  }
+  
+  .calendar-todo {
+    font-size: 10px;
+    padding: 2px 4px;
+  }
+  
+  .calendar-todo-role {
+    font-size: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .calendar-day {
+    min-height: 60px;
+    padding: 4px;
+  }
+  
+  .calendar-day-number {
+    font-size: 12px;
+    margin-bottom: 4px;
+  }
+  
+  .calendar-todo {
+    font-size: 9px;
+  }
+}
